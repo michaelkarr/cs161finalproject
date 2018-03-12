@@ -21,13 +21,19 @@ def LCS(A,B):
 
 	return arr[m][n]
 
+def cut(s, i):
+    return s[i:] + s[0:i]
+
 def main():
 	if len(sys.argv) != 1:
 		sys.exit('Usage: `python CLCSSlow.py < input`')
 	
 	for l in sys.stdin:
 		A,B = l.split()
-		print LCS(A,B)
+		# cut A at all possible locations, B constant
+		# take the maximum path length of those computed
+		maxLength = max([LCS(cut(A, j), B) for j in range(len(A))])
+		print maxLength
 	return
 
 if __name__ == '__main__':
