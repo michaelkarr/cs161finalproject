@@ -1,14 +1,12 @@
 import sys
 import numpy as np
 
-arr = np.zeros((2048, 2048), dtype=int)
-
 """
 Currently just runs LCS
 TODO: implement CLCSFast algorithm
 """
 
-def LCS(A,B):
+def LCS(A,B,arr):
 	m = len(A)
 	n = len(B)
 
@@ -21,13 +19,25 @@ def LCS(A,B):
 
 	return arr[m][n]
 
+def cut(s, i):
+    return s[i:] + s[0:i]
+
+def setArr(m, n):
+	# TODO: check dimensions
+	return np.zeros((2 * (m + 1), (n + 1)), dtype=int)
+
 def main():
 	if len(sys.argv) != 1:
 		sys.exit('Usage: `python CLCSFast.py < input`')
 	
 	for l in sys.stdin:
 		A,B = l.split()
-		print LCS(A,B)
+		arr = setArr(len(A), len(B))
+		# cut A at all possible locations, B constant
+		# take the maximum path length of those computed
+		# TODO: should we be checking which is longer
+		maxLength = max([LCS(cut(A, j), B, arr) for j in range(len(A))])
+		print maxLength
 	return
 
 if __name__ == '__main__':
