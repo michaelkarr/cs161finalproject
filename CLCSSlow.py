@@ -30,6 +30,8 @@ def main():
 	
 	for l in sys.stdin:
 		A,B = l.split()
+		if len(A) > len(B):
+			A, B = B, A
 		# cut A at all possible locations, B constant
 		# take the maximum path length of those computed
 		# TODO: should we be checking which is longer
