@@ -63,11 +63,13 @@ def findShortestPaths(A, B, p, l, u, arr, pValDict):
 def cut(s, i):
     return s[i:] + s[0:i]
 
+# set up the dp arr
 def setArr(m, n):
 	return np.zeros((2 * m + 1, (n + 1)), dtype=int)
 
-def setP(m, n):
-	return np.zeros((2 * m + 1, (n + 1)), dtype=int)
+# dim: m (for each possible path p0-pm) x 2m (2m total rows)
+def setP(m):
+	return np.zeros((m + 1, (2 * m + 1)), dtype=int)
 
 def main():
 	if len(sys.argv) != 1:
@@ -83,7 +85,7 @@ def main():
 		maxLength = max([disLCS(cut(A, j), B, 0, arr) for j in range(len(A))])
 
 		# TODO: this code should run, not above line
-		p = setP(len(A), len(B))
+		p = setP(len(A))
 		pValDict = dict()
 		# p[0] is the backtrace of standard LCS
 		# p[-1] is the same as p[0] but rows shifted down m
