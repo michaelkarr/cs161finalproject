@@ -1,5 +1,6 @@
 import sys
 import numpy as np
+import logging
 
 """
 Currently just runs LCS
@@ -22,11 +23,27 @@ def LCSBig(A,B,arr):
 	# return max(arr[i + m][n] for i in range(m))
 	return arr[m][n]
 
+def backtracePath(A, B, i, j, arr):  # dim of array
+	# TODO: currently nonbounded, need to add 
+	path = np.zeroes((i,), dtype=int)
+	while i > 0 and j > 0:
+		if A[i-1] == B[j-1]:
+			path[i - 1] = j - 1
+			i -= 1
+			j -= 1 
+		elif arr[i-1][j] > arr[i][j-1]:
+			path[i - 1] = j
+			i -= 1
+		else:
+			path[i] = j - 1
+			j -= 1
+
+
 def singleShortestPath(A, B, m, pl, pu):
 	# computes pm by running the DP on the table bounded by pl and pu
 	return
 
-def findShortestPaths(A, B, p, l, u):
+def findShortestPaths(A, B, p, l, u, arr):
 	if u - l <= 1:
 		return
 	mid = int((l + u) / 2)
@@ -39,6 +56,9 @@ def cut(s, i):
 
 def setArr(m, n):
 	# TODO: check dimensions
+	return np.zeros((2 * m + 1, (n + 1)), dtype=int)
+
+def setP(m, n):
 	return np.zeros((2 * m + 1, (n + 1)), dtype=int)
 
 def main():
