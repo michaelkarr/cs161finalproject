@@ -15,7 +15,7 @@ def disLCS(A, B, dis, arr):
 
 	# 0 out row before for calculation
 	# do not need to 0 out first col bc always 0
-	arr[dis - 1] = 0
+	arr[dis] = 0
 
 	for i in range(1,m+1):
 		for j in range(1,n+1):
@@ -50,7 +50,11 @@ def singleShortestPath(A, B, m, pl, pu, arr, pValDict):
 	val = disLCS(A, B, m, arr)
 	pValDict[m] = val
 	# step 2: backtracePath(A, B, i, j, dis, arr) and return the path
-	return
+	# lets us compare the values in the strings in the grid
+	A = A + A
+	# backtraces starting at bottom right corner of DP array at row len(A) + m
+	path = backtracePath(A, B, len(A) + m, len(B), m, arr)
+	return path
 
 def findShortestPaths(A, B, p, l, u, arr, pValDict):
 	if u - l <= 1:
