@@ -5,7 +5,6 @@ arr = np.zeros((2048, 2048), dtype=int)
 
 """
 Currently just runs LCS
-TODO: make sure string length issue is fixed
 """
 
 def LCS(A,B):
@@ -34,7 +33,6 @@ def main():
 			A, B = B, A
 		# cut A at all possible locations, B constant
 		# take the maximum path length of those computed
-		# TODO: should we be checking which is longer
 		maxLength = max([LCS(cut(A, j), B) for j in range(len(A))])
 		print maxLength
 	return
