@@ -27,7 +27,7 @@ def disLCS(A, B, dis, arr):
 	return arr[m + dis][n]
 
 # potentially backtrace twice for upper and lower bounds
-def backtracePathUpper(A, B, i, j, pl, pu, dis, arr):  # dis = displacement to calculate
+def backtracePathUp(A, B, i, j, pl, pu, dis, arr):  # dis = displacement to calculate
 	# TODO: currently nonbounded, need to add 
 	path = np.zeros((len(A) + 1,), dtype=int)
 	while i > 0 + dis and j > 0:
@@ -43,7 +43,7 @@ def backtracePathUpper(A, B, i, j, pl, pu, dis, arr):  # dis = displacement to c
 			j -= 1
 	return path
 
-def backtracePathLower(A, B, i, j, pl, pu, dis, arr):  # dis = displacement to calculate
+def backtracePathLeft(A, B, i, j, pl, pu, dis, arr):  # dis = displacement to calculate
 	return
 
 
@@ -56,19 +56,21 @@ def singleShortestPath(A, B, m, pl, pu, arr, pValDict):
 	# lets us compare the values in the strings in the grid
 	A = A + A
 	# backtraces starting at bottom right corner of DP array at row len(A) + m
-	upperPath = backtracePathUpper(A, B, len(A)/2 + m, len(B), pl, pu, m, arr)
-	lowerPath = backtracePathLower(A, B, len(A)/2 + m, len(B), pl, pu, m, arr)
+	upperPath = backtracePathUp(A, B, len(A)/2 + m, len(B), pl, pu, m, arr)
+	lowerPath = backtracePathLeft(A, B, len(A)/2 + m, len(B), pl, pu, m, arr)
 	# print arr
 	# print path
-	return upperPath
+	return upperPath, upperPath
 
-def findShortestPaths(A, B, p, l, u, arr, pValDict):
+def findShortestPaths(A, B, pLower, pUpper, l, u, arr, pValDict):
 	if u - l <= 1:
 		return
 	mid = int((l + u) / 2)
-	p[mid] = singleShortestPath(A, B, mid, p[l], p[u], arr, pValDict)
-	findShortestPaths(A, B, p, l, mid, arr, pValDict)
-	findShortestPaths(A, B, p, mid, u, arr, pValDict)
+	low, up = singleShortestPath(A, B, mid, pLower[l], pUpper[u], arr, pValDict)
+	pLower[mid] = low
+	pUpper[mid] = up
+	findShortestPaths(A, B, pLower, pUpper, l, mid, arr, pValDict)
+	findShortestPaths(A, B, pLower, pUpper, mid, u, arr, pValDict)
 
 def cut(s, i):
     return s[i:] + s[0:i]
@@ -79,7 +81,7 @@ def setArr(m, n):
 
 # dim: m (for each possible path p0-pm) x 2m (2m total rows)
 def setP(m):
-	return np.zeros((m + 1, 2 * m + 1), dtype=int)
+	return np.zeros((m + 1, 2 * m + 1), dtype=int), np.zeros((m + 1, 2 * m + 1), dtype=int)
 
 def main():
 	if len(sys.argv) != 1:
@@ -92,17 +94,19 @@ def main():
 		arr = setArr(len(A), len(B))
 
 		# TODO: this code should run, not above line
-		p = setP(len(A))
+		pLower, pUpper = setP(len(A))
 		pValDict = dict()
 		# p[0] is the backtrace of standard LCS
-		p[0] = singleShortestPath(A, B, 0, None, None, arr, pValDict)
-		p[-1] = singleShortestPath(A, B, len(A), None, None, arr, pValDict)
+		pLower[0] = singleShortestPath(A, B, 0, None, None, arr, pValDict)[0]
+		pUpper[0] = pLower[0]
+		pLower[-1] = singleShortestPath(A, B, len(A), None, None, arr, pValDict)[0]
+		pUpper[-1] = pUpper[0]
 		# p[m] is the same path as p[0] but shifted down m
 		# p[-1] = np.concatenate(([0], p[0][int((len(p[0]) + 1)/2):], p[0][1:int((len(p[0]) + 1)/2)]))
 		# print p[0]
 		# print p[-1]
 		# p[-1] is the same as p[0] but rows shifted down m
-		findShortestPaths(A, B, p, 0, len(A), arr, pValDict)
+		findShortestPaths(A, B, pLower, pUpper, 0, len(A), arr, pValDict)
 		# return max([value for key, value in pValDict.iteritems()])
 		print max([value for key, value in pValDict.iteritems()])
 	return
