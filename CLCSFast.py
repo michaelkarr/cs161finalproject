@@ -29,7 +29,7 @@ def disLCS(A, B, dis, arr):
 # potentially backtrace twice for upper and lower bounds
 def backtracePath(A, B, i, j, dis, arr):  # dis = displacement to calculate
 	# TODO: currently nonbounded, need to add 
-	path = np.zeroes((i,), dtype=int)
+	path = np.zeros((len(A) + 1,), dtype=int)
 	while i > 0 + dis and j > 0:
 		if A[i-1] == B[j-1]:
 			path[i - 1] = j - 1
@@ -53,7 +53,9 @@ def singleShortestPath(A, B, m, pl, pu, arr, pValDict):
 	# lets us compare the values in the strings in the grid
 	A = A + A
 	# backtraces starting at bottom right corner of DP array at row len(A) + m
-	path = backtracePath(A, B, len(A) + m, len(B), m, arr)
+	path = backtracePath(A, B, len(A)/2 + m, len(B), m, arr)
+	# print arr
+	# print path
 	return path
 
 def findShortestPaths(A, B, p, l, u, arr, pValDict):
@@ -61,8 +63,8 @@ def findShortestPaths(A, B, p, l, u, arr, pValDict):
 		return
 	mid = int((l + u) / 2)
 	p[mid] = singleShortestPath(A, B, mid, p[l], p[u], arr, pValDict)
-	findShortestPaths(A, B, p, l, mid)
-	findShortestPaths(A, B, p, mid, u)
+	findShortestPaths(A, B, p, l, mid, arr, pValDict)
+	findShortestPaths(A, B, p, mid, u, arr, pValDict)
 
 def cut(s, i):
     return s[i:] + s[0:i]
@@ -73,7 +75,7 @@ def setArr(m, n):
 
 # dim: m (for each possible path p0-pm) x 2m (2m total rows)
 def setP(m):
-	return np.zeros((m + 1, (2 * m + 1)), dtype=int)
+	return np.zeros((m + 1, 2 * m + 1), dtype=int)
 
 def main():
 	if len(sys.argv) != 1:
@@ -85,17 +87,20 @@ def main():
 			A, B = B, A
 		arr = setArr(len(A), len(B))
 
-		# THIS PIECE OF CODE IS TEMPORARY, JUST SO IT COMPILES RIGHT NOW
-		maxLength = max([disLCS(cut(A, j), B, 0, arr) for j in range(len(A))])
+		# # THIS PIECE OF CODE IS TEMPORARY, JUST SO IT COMPILES RIGHT NOW
+		# maxLength = max([disLCS(cut(A, j), B, 0, arr) for j in range(len(A))])
 
 		# TODO: this code should run, not above line
 		p = setP(len(A))
 		pValDict = dict()
 		# p[0] is the backtrace of standard LCS
+		p[0] = singleShortestPath(A, B, 0, None, None, arr, pValDict)
+
 		# p[-1] is the same as p[0] but rows shifted down m
-		# call findShortestPaths(A, B, p, 0, len(A), pValDict) to fill p array
+		# p[-1] = [val for ]
+		findShortestPaths(A, B, p, 0, len(A), arr, pValDict)
 		# return max([value for key, value in pValDict.iteritems()])
-		print maxLength
+		print max([value for key, value in pValDict.iteritems()])
 	return
 
 if __name__ == '__main__':
