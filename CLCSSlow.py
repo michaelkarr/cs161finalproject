@@ -4,7 +4,7 @@ import numpy as np
 arr = np.zeros((2048, 2048), dtype=int)
 
 """
-Currently just runs LCS
+Currently runs CLCSSlow
 """
 
 def LCS(A,B):
@@ -17,7 +17,6 @@ def LCS(A,B):
 				arr[i][j] = arr[i-1][j-1]+1
 			else:
 				arr[i][j] = max(arr[i-1][j], arr[i][j-1])
-
 	return arr[m][n]
 
 def cut(s, i):

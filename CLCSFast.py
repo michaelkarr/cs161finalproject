@@ -2,8 +2,7 @@ import sys
 import numpy as np
 
 """
-Currently just runs LCS
-TODO: implement CLCSFast algorithm
+Currently runs CLCSFast
 """
 
 # used for calculating each DP
@@ -23,9 +22,48 @@ def disLCS(A, B, dis, arr):
 				arr[dis + i][j] = arr[dis + i-1][j-1]+1
 			else:
 				arr[dis + i][j] = max(arr[dis + i-1][j], arr[dis + i][j-1])
+	#print arr
+	return arr[m + dis][n]
+
+def disLCSBounds(A, B, pl, pu, dis, arr):
+	m = len(A)
+	n = len(B)
+	
+	newA = A + A
+
+	for i in range(1, m+2):
+		arr[i + dis - 1] = 0
+
+
+	"""
+	W A R N I N G
+	BELOW IS SOME OF THE MOST WASTEMAN CODE EVER WRITTEN
+	APPROACH WITH CAUTION
+	WE ARE ALL JUST AN OFF ONE ERROR
+	"""
+	# essentially computes the DP with bounds
+	for i in range(1, m + 1):
+		j = 1
+		topBound = pu[dis + i] if pu[dis + i] != 0 else n + 1
+		while True:
+			if j < pl[dis + i]:
+				j = pl[dis + i]
+			if j > pu[dis + i + 1] and pu[dis + i + 1] > 0:
+				break
+			if j > n:
+				break
+			if newA[dis + i-1] == B[j-1] and topBound >= j-1 and pl[dis+i-1] <= j-1:
+				arr[dis + i][j] = arr[dis + i-1][j-1]+1
+			else:
+				left = arr[dis + i][j-1] if pl[dis+i-1] <= j else -1
+				up = arr[dis + i-1][j] if  topBound >= j else -1
+				arr[dis + i][j] = max(up, left)
+			j += 1
 
 	return arr[m + dis][n]
 
+
+# run this backtrace for the initialization of p0 and pm
 def initBacktrace(A, B, i, j, pl, pu, dis, arr):  # dis = displacement to calculate
 	path = np.zeros((len(A) + 1,), dtype=int)
 	while i > 0 + dis and j > 0:
@@ -41,64 +79,61 @@ def initBacktrace(A, B, i, j, pl, pu, dis, arr):  # dis = displacement to calcul
 			j -= 1
 	return path
 
-# potentially backtrace for lower, priority up for tightness
+
 def backtracePathUp(A, B, i, j, pl, pu, dis, arr):  # dis = displacement to calculate
-	# TODO: currently nonbounded, need to add 
 	path = np.zeros((len(A) + 1,), dtype=int)
 	while i > 0 + dis and j > 0:
-		# if A[i-1] == B[j-1]:
-		# 	path[i - 1] = j - 1
-		# 	i -= 1
-		# 	j -= 1 
-		# elif arr[i-1][j] > arr[i][j-1]:
-		# 	path[i - 1] = j
-		# 	i -= 1
-		# else:
-		# 	path[i] = j - 1
-		# 	j -= 1
-		if pu[i - 1] >= j and arr[i - 1][j] == arr[i][j]:
-		 	path[i - 1] = j
-		 	i -= 1
-		elif pu[i - 1] >= j - 1 and pl[i - 1] <= j - 1 and A[i-1] == B[j-1]:
+		# go left
+		topBound = pu[i] if pu[i] != 0 else len(B) + 1
+		if topBound >= j and arr[i-1][j] == arr[i][j] and i - 1 > dis:
+			#print "UP"
+		 	path[i-1] = j
+			i -= 1
+		# go diag
+		elif topBound >= j - 1 and pl[i - 1] <= j - 1 and A[i-1] == B[j-1] and i-1 > dis:
 			path[i - 1] = j - 1
 			i -= 1
 			j -= 1
+			#print "DIAG"
+		# go up
 		else:
-			path[i] = j - 1
-			j -= 1
+			path[i] = j -1
+		 	j -= 1
+		 	#print "LEFT"
+
 	return path
 
 def backtracePathLeft(A, B, i, j, pl, pu, dis, arr):  # dis = displacement to calculate
-	# TODO: currently nonbounded, need to add 
 	path = np.zeros((len(A) + 1,), dtype=int)
 	while i > 0 + dis and j > 0:
-		# if A[i-1] == B[j-1]:
-		# 	path[i - 1] = j - 1
-		# 	i -= 1
-		# 	j -= 1 
-		# elif arr[i-1][j] > arr[i][j-1]:
-		# 	path[i - 1] = j
-		# 	i -= 1
-		# else:
-		# 	path[i] = j - 1
-		# 	j -= 1
-		if pu[i] >= j - 1 and arr[i][j-1] == arr[i][j]:
+		# go left
+		topBound = pu[i] if pu[i] != 0 else len(B) + 1
+		if pl[i] <= j - 1 and arr[i][j-1] == arr[i][j]:
+			#print "LEFT"
 		 	path[i] = j - 1
 			j -= 1
-		elif pu[i - 1] >= j - 1 and pl[i - 1] <= j - 1 and A[i-1] == B[j-1]:
+		# go diag
+		elif topBound >= j - 1 and pl[i - 1] <= j - 1 and A[i-1] == B[j-1] and i-1 > dis:
 			path[i - 1] = j - 1
 			i -= 1
 			j -= 1
+			#print "DIAG"
+		# go up
 		else:
 			path[i - 1] = j
 		 	i -= 1
+		 	#print "UP"
+
 	return path
 
 
 def singleShortestPath(A, B, m, pl, pu, arr, pValDict):
 	# computes pm by running the DP on the table bounded by pl and pu
 	# step 1: compute dp
-	val = disLCS(A, B, m, arr)
+	if m == 0 or m == len(A):
+		val = disLCS(A, B, m, arr)
+	else:
+		val = disLCSBounds(A, B, pl, pu, m, arr)
 	pValDict[m] = val
 	# step 2: backtracePath(A, B, i, j, dis, arr) and return the path
 	# lets us compare the values in the strings in the grid
@@ -109,15 +144,11 @@ def singleShortestPath(A, B, m, pl, pu, arr, pValDict):
 		return path
 	else:
 		# backtraces starting at bottom right corner of DP array at row len(A) + m
-		lowerPath = backtracePathUp(A, B, len(A)/2 + m, len(B), pl, pu, m, arr)
-		upperPath = backtracePathLeft(A, B, len(A)/2 + m, len(B), pl, pu, m, arr)
-	# print arr
-	# print path
-	# print lowerPath, upperPath
-	return lowerPath, upperPath
+		lowerBound = backtracePathUp(A, B, len(A)/2 + m, len(B), pl, pu, m, arr)
+		upperBound = backtracePathLeft(A, B, len(A)/2 + m, len(B), pl, pu, m, arr)
+	return lowerBound, upperBound
 
 def findShortestPaths(A, B, pLower, pUpper, l, u, arr, pValDict):
-	# print u, l
 	if l - u <= 1:
 		return
 	mid = int((l + u) / 2)
@@ -148,7 +179,6 @@ def main():
 			A, B = B, A
 		arr = setArr(len(A), len(B))
 
-		# TODO: this code should run, not above line
 		pLower, pUpper = setP(len(A))
 		pValDict = dict()
 		# p[0] is the backtrace of standard LCS
@@ -156,13 +186,9 @@ def main():
 		pLower[0] = pUpper[0]
 		pUpper[-1] = singleShortestPath(A, B, len(A), pLower, pUpper, arr, pValDict)
 		pLower[-1] = pUpper[-1]
-		# p[m] is the same path as p[0] but shifted down m
-		# p[-1] = np.concatenate(([0], p[0][int((len(p[0]) + 1)/2):], p[0][1:int((len(p[0]) + 1)/2)]))
-		# print p[0]
-		# print p[-1]
-		# p[-1] is the same as p[0] but rows shifted down m
+
 		findShortestPaths(A, B, pLower, pUpper, len(A), 0, arr, pValDict)
-		# return max([value for key, value in pValDict.iteritems()])
+
 		print max([value for key, value in pValDict.iteritems()])
 	return
 
