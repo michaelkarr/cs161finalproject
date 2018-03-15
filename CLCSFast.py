@@ -27,7 +27,7 @@ def disLCS(A, B, dis, arr):
 	return arr[m + dis][n]
 
 # potentially backtrace twice for upper and lower bounds
-def backtracePath(A, B, i, j, dis, arr):  # dis = displacement to calculate
+def backtracePathUpper(A, B, i, j, pl, pu, dis, arr):  # dis = displacement to calculate
 	# TODO: currently nonbounded, need to add 
 	path = np.zeros((len(A) + 1,), dtype=int)
 	while i > 0 + dis and j > 0:
@@ -43,6 +43,9 @@ def backtracePath(A, B, i, j, dis, arr):  # dis = displacement to calculate
 			j -= 1
 	return path
 
+def backtracePathLower(A, B, i, j, pl, pu, dis, arr):  # dis = displacement to calculate
+	return
+
 
 def singleShortestPath(A, B, m, pl, pu, arr, pValDict):
 	# computes pm by running the DP on the table bounded by pl and pu
@@ -53,10 +56,11 @@ def singleShortestPath(A, B, m, pl, pu, arr, pValDict):
 	# lets us compare the values in the strings in the grid
 	A = A + A
 	# backtraces starting at bottom right corner of DP array at row len(A) + m
-	path = backtracePath(A, B, len(A)/2 + m, len(B), m, arr)
+	upperPath = backtracePathUpper(A, B, len(A)/2 + m, len(B), pl, pu, m, arr)
+	lowerPath = backtracePathLower(A, B, len(A)/2 + m, len(B), pl, pu, m, arr)
 	# print arr
 	# print path
-	return path
+	return upperPath
 
 def findShortestPaths(A, B, p, l, u, arr, pValDict):
 	if u - l <= 1:
@@ -87,17 +91,17 @@ def main():
 			A, B = B, A
 		arr = setArr(len(A), len(B))
 
-		# # THIS PIECE OF CODE IS TEMPORARY, JUST SO IT COMPILES RIGHT NOW
-		# maxLength = max([disLCS(cut(A, j), B, 0, arr) for j in range(len(A))])
-
 		# TODO: this code should run, not above line
 		p = setP(len(A))
 		pValDict = dict()
 		# p[0] is the backtrace of standard LCS
 		p[0] = singleShortestPath(A, B, 0, None, None, arr, pValDict)
-
+		p[-1] = singleShortestPath(A, B, len(A), None, None, arr, pValDict)
+		# p[m] is the same path as p[0] but shifted down m
+		# p[-1] = np.concatenate(([0], p[0][int((len(p[0]) + 1)/2):], p[0][1:int((len(p[0]) + 1)/2)]))
+		# print p[0]
+		# print p[-1]
 		# p[-1] is the same as p[0] but rows shifted down m
-		# p[-1] = [val for ]
 		findShortestPaths(A, B, p, 0, len(A), arr, pValDict)
 		# return max([value for key, value in pValDict.iteritems()])
 		print max([value for key, value in pValDict.iteritems()])
