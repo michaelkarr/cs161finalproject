@@ -26,9 +26,7 @@ def disLCS(A, B, dis, arr):
 
 	return arr[m + dis][n]
 
-# potentially backtrace twice for upper and lower bounds
-def backtracePathUp(A, B, i, j, pl, pu, dis, arr):  # dis = displacement to calculate
-	# TODO: currently nonbounded, need to add 
+def initBacktrace(A, B, i, j, pl, pu, dis, arr):  # dis = displacement to calculate
 	path = np.zeros((len(A) + 1,), dtype=int)
 	while i > 0 + dis and j > 0:
 		if A[i-1] == B[j-1]:
@@ -43,8 +41,58 @@ def backtracePathUp(A, B, i, j, pl, pu, dis, arr):  # dis = displacement to calc
 			j -= 1
 	return path
 
+# potentially backtrace for lower, priority up for tightness
+def backtracePathUp(A, B, i, j, pl, pu, dis, arr):  # dis = displacement to calculate
+	# TODO: currently nonbounded, need to add 
+	path = np.zeros((len(A) + 1,), dtype=int)
+	while i > 0 + dis and j > 0:
+		# if A[i-1] == B[j-1]:
+		# 	path[i - 1] = j - 1
+		# 	i -= 1
+		# 	j -= 1 
+		# elif arr[i-1][j] > arr[i][j-1]:
+		# 	path[i - 1] = j
+		# 	i -= 1
+		# else:
+		# 	path[i] = j - 1
+		# 	j -= 1
+		if pu[i - 1] >= j and arr[i - 1][j] == arr[i][j]:
+		 	path[i - 1] = j
+		 	i -= 1
+		elif pu[i - 1] >= j - 1 and pl[i - 1] <= j - 1 and A[i-1] == B[j-1]:
+			path[i - 1] = j - 1
+			i -= 1
+			j -= 1
+		else:
+			path[i] = j - 1
+			j -= 1
+	return path
+
 def backtracePathLeft(A, B, i, j, pl, pu, dis, arr):  # dis = displacement to calculate
-	return
+	# TODO: currently nonbounded, need to add 
+	path = np.zeros((len(A) + 1,), dtype=int)
+	while i > 0 + dis and j > 0:
+		# if A[i-1] == B[j-1]:
+		# 	path[i - 1] = j - 1
+		# 	i -= 1
+		# 	j -= 1 
+		# elif arr[i-1][j] > arr[i][j-1]:
+		# 	path[i - 1] = j
+		# 	i -= 1
+		# else:
+		# 	path[i] = j - 1
+		# 	j -= 1
+		if pu[i] >= j - 1 and arr[i][j-1] == arr[i][j]:
+		 	path[i] = j - 1
+			j -= 1
+		elif pu[i - 1] >= j - 1 and pl[i - 1] <= j - 1 and A[i-1] == B[j-1]:
+			path[i - 1] = j - 1
+			i -= 1
+			j -= 1
+		else:
+			path[i - 1] = j
+		 	i -= 1
+	return path
 
 
 def singleShortestPath(A, B, m, pl, pu, arr, pValDict):
@@ -55,15 +103,22 @@ def singleShortestPath(A, B, m, pl, pu, arr, pValDict):
 	# step 2: backtracePath(A, B, i, j, dis, arr) and return the path
 	# lets us compare the values in the strings in the grid
 	A = A + A
-	# backtraces starting at bottom right corner of DP array at row len(A) + m
-	upperPath = backtracePathUp(A, B, len(A)/2 + m, len(B), pl, pu, m, arr)
-	lowerPath = backtracePathLeft(A, B, len(A)/2 + m, len(B), pl, pu, m, arr)
+	# init is for first runs
+	if m == 0 or m == len(A)/2:
+		path = initBacktrace(A, B, len(A)/2 + m, len(B), pl, pu, m, arr)
+		return path
+	else:
+		# backtraces starting at bottom right corner of DP array at row len(A) + m
+		lowerPath = backtracePathUp(A, B, len(A)/2 + m, len(B), pl, pu, m, arr)
+		upperPath = backtracePathLeft(A, B, len(A)/2 + m, len(B), pl, pu, m, arr)
 	# print arr
 	# print path
-	return upperPath, upperPath
+	# print lowerPath, upperPath
+	return lowerPath, upperPath
 
 def findShortestPaths(A, B, pLower, pUpper, l, u, arr, pValDict):
-	if u - l <= 1:
+	# print u, l
+	if l - u <= 1:
 		return
 	mid = int((l + u) / 2)
 	low, up = singleShortestPath(A, B, mid, pLower[l], pUpper[u], arr, pValDict)
@@ -97,16 +152,16 @@ def main():
 		pLower, pUpper = setP(len(A))
 		pValDict = dict()
 		# p[0] is the backtrace of standard LCS
-		pLower[0] = singleShortestPath(A, B, 0, None, None, arr, pValDict)[0]
-		pUpper[0] = pLower[0]
-		pLower[-1] = singleShortestPath(A, B, len(A), None, None, arr, pValDict)[0]
-		pUpper[-1] = pUpper[0]
+		pUpper[0] = singleShortestPath(A, B, 0, pLower, pUpper, arr, pValDict)
+		pLower[0] = pUpper[0]
+		pUpper[-1] = singleShortestPath(A, B, len(A), pLower, pUpper, arr, pValDict)
+		pLower[-1] = pUpper[-1]
 		# p[m] is the same path as p[0] but shifted down m
 		# p[-1] = np.concatenate(([0], p[0][int((len(p[0]) + 1)/2):], p[0][1:int((len(p[0]) + 1)/2)]))
 		# print p[0]
 		# print p[-1]
 		# p[-1] is the same as p[0] but rows shifted down m
-		findShortestPaths(A, B, pLower, pUpper, 0, len(A), arr, pValDict)
+		findShortestPaths(A, B, pLower, pUpper, len(A), 0, arr, pValDict)
 		# return max([value for key, value in pValDict.iteritems()])
 		print max([value for key, value in pValDict.iteritems()])
 	return
